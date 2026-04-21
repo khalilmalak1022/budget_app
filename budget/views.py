@@ -1,3 +1,9 @@
-from django.shortcuts import render
-
-# Create your views here.
+from .views_auth import *
+from .views_transactions import *
+from .views_categories import *
+from .views_dashboard import *
+from .views_objectifs import *
+from .views_budgets import *
+from .views_export import *
+from .views_notifications import *
+from .views_chatbot import *
