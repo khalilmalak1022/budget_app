@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h4><i class="bi bi-plus-circle"></i> Transaction</h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Montant</label>
+                        <input type="number" name="montant" step="0.01"
+                            class="form-control"
+                            value="{{ form.montant.value|default:'' }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <input type="text" name="description"
+                            class="form-control"
+                            value="{{ form.description.value|default:'' }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Date</label>
+                        <input type="date" name="date"
+                            class="form-control"
+                            value="{{ form.date.value|default:'' }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Type</label>
+                        <select name="type" class="form-select" required>
+                            <option value="depense" {% if form.type.value == 'depense' %}selected{% endif %}>Dépense</option>
+                            <option value="revenu" {% if form.type.value == 'revenu' %}selected{% endif %}>Revenu</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Catégorie</label>
+                        <select name="categorie" class="form-select">
+                            <option value="">-- Choisir --</option>
+                            {% for cat in form.categorie.field.queryset %}
+                            <option value="{{ cat.pk }}"
+                                {% if form.categorie.value == cat.pk|stringformat:"s" %}selected{% endif %}>
+                                {{ cat.nom }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" name="est_recurrente"
+                            class="form-check-input" id="recurrente"
+                            {% if form.est_recurrente.value %}checked{% endif %}>
+                        <label class="form-check-label" for="recurrente">
+                            Transaction récurrente
+                        </label>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Fréquence</label>
+                        <select name="frequence" class="form-select">
+                            <option value="">-- Choisir --</option>
+                            <option value="journalier">Journalier</option>
+                            <option value="mensuel">Mensuel</option>
+                            <option value="hebdo">Hebdomadaire</option>
+                            <option value="annuel">Annuel</option>
+                            <option value="variable">Variable</option>
+                        </select>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-save"></i> Enregistrer
+                        </button>
+                        <a href="{% url 'transaction_liste' %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Annuler
+                        </a>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

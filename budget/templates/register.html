@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow mt-5">
+            <div class="card-header bg-success text-white text-center">
+                <h4><i class="bi bi-person-plus"></i> Inscription</h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Nom d'utilisateur</label>
+                        <input type="text" name="username" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mot de passe</label>
+                        <input type="password" name="password1" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Confirmer le mot de passe</label>
+                        <input type="password" name="password2" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Devise</label>
+                        <select name="devise" class="form-select">
+                            <option value="DH">Dirham (DH)</option>
+                            <option value="EUR">Euro (€)</option>
+                            <option value="USD">Dollar ($)</option>
+                        </select>
+                    </div>
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            {% for field in form %}
+                                {% for error in field.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-person-check"></i> S'inscrire
+                        </button>
+                    </div>
+                </form>
+                <hr>
+                <div class="text-center">
+                    <p>Déjà un compte ?
+                        <a href="{% url 'login' %}">Se connecter</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
