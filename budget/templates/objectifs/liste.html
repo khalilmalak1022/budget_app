@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block title %}Objectifs financiers{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="fw-semibold mb-0">Objectifs financiers</h4>
+  <a href="{% url 'objectif_ajouter' %}" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-1"></i> Nouvel objectif
+  </a>
+</div>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  {% endfor %}
+{% endif %}
+
+{% if objectifs_data %}
+  <div class="row g-3">
+    {% for item in objectifs_data %}
+    <div class="col-12 col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+
+          <!-- En-tête -->
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+              <h6 class="fw-semibold mb-0">{{ item.objectif.nom }}</h6>
+              <small class="text-muted">
+                {% if item.objectif.type == 'epargne' %}
+                  <i class="bi bi-piggy-bank"></i> Épargne
+                {% else %}
+                  <i class="bi bi-shield-exclamation"></i> Limite de dépenses
+                {% endif %}
+              </small>
+            </div>
+            <div class="d-flex gap-2">
+              <a href="{% url 'objectif_modifier' item.objectif.pk %}"
+                 class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <a href="{% url 'objectif_supprimer' item.objectif.pk %}"
+                 class="btn btn-sm btn-outline-danger">
+                <i class="bi bi-trash"></i>
+              </a>
+            </div>
+          </div>
+
+          <!-- Alerte dépassement -->
+          {% if item.depasse %}
+          <div class="alert alert-danger py-1 px-2 mb-2 small">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+            Budget dépassé !
+          </div>
+          {% endif %}
+
+          <!-- Barre de progression -->
+          <div class="mb-2">
+            <div class="d-flex justify-content-between small text-muted mb-1">
+              <span>{{ item.montant_actuel }} DH</span>
+              <span>{{ item.objectif.montant_cible }} DH</span>
+            </div>
+            <div class="progress" style="height: 12px; border-radius: 6px;">
+              <div class="progress-bar bg-{{ item.couleur }}"
+                   role="progressbar"
+                   style="width: {{ item.pourcentage }}%; border-radius: 6px;"
+                   aria-valuenow="{{ item.pourcentage }}"
+                   aria-valuemin="0"
+                   aria-valuemax="100">
+              </div>
+            </div>
+            <div class="text-end small mt-1 text-muted">{{ item.pourcentage }}%</div>
+          </div>
+
+          <!-- Date limite & jours restants -->
+          <div class="d-flex justify-content-between small text-muted mt-2">
+            <span><i class="bi bi-calendar3 me-1"></i>{{ item.objectif.date_limite|date:"d/m/Y" }}</span>
+            <span>
+              {% if item.jours_restants > 0 %}
+                <span class="text-muted">{{ item.jours_restants }} jours restants</span>
+              {% elif item.jours_restants == 0 %}
+                <span class="text-warning fw-semibold">Aujourd'hui !</span>
+              {% else %}
+                <span class="text-danger fw-semibold">Expiré</span>
+              {% endif %}
+            </span>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+{% else %}
+  <div class="text-center text-muted py-5">
+    <i class="bi bi-trophy fs-1 d-block mb-3"></i>
+    <p>Aucun objectif défini pour le moment.</p>
+    <a href="{% url 'objectif_ajouter' %}" class="btn btn-primary">
+      Créer mon premier objectif
+    </a>
+  </div>
+{% endif %}
+
+{% endblock %}
