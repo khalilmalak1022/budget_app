@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block auth_content %}
+<div class="auth-card">
+    <div class="auth-logo">
+        <h1>◈ BudgetApp</h1>
+        <p>Connectez-vous à votre espace</p>
+    </div>
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label class="form-label">Nom d'utilisateur</label>
+            <input type="text" name="username" class="form-control" placeholder="votre_nom" required>
+        </div>
+        <div class="mb-4">
+            <label class="form-label">Mot de passe</label>
+            <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn btn-primary w-100 mb-3">
+            <i class="bi bi-box-arrow-in-right"></i> Se connecter
+        </button>
+    </form>
+    <p class="text-center mb-0" style="color:var(--text2);font-size:0.9rem;">
+        Pas encore de compte ?
+        <a href="{% url 'register' %}" style="color:var(--accent);text-decoration:none;font-weight:500;">S'inscrire →</a>
+    </p>
+</div>
+{% endblock %}
