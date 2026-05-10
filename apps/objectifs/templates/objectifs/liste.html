@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Objectifs financiers{% endblock %}
+
+{% block extra_css %}
+<style>
+  .obj-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+    overflow: hidden;
+    transition: transform .25s cubic-bezier(.4,0,.2,1), box-shadow .25s cubic-bezier(.4,0,.2,1);
+  }
+  .obj-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px var(--shadow); }
+  .obj-card-accent { height: 4px; width: 100%; }
+
+  .obj-atteint { border-color: rgba(67,233,123,.25) !important; animation: pulseGreen 2.5s ease-in-out infinite; }
+  @keyframes pulseGreen { 0%,100% { box-shadow: 0 4px 16px rgba(67,233,123,.08); } 50% { box-shadow: 0 4px 28px rgba(67,233,123,.28); } }
+
+  .obj-depasse { border-color: rgba(255,101,132,.25) !important; animation: pulseRed 2s ease-in-out infinite; }
+  @keyframes pulseRed { 0%,100% { box-shadow: 0 4px 16px rgba(255,101,132,.08); } 50% { box-shadow: 0 4px 28px rgba(255,101,132,.28); } }
+
+  .prog-epargne-atteint .progress-bar { background: linear-gradient(90deg, var(--accent3), #00e5a0) !important; }
+  .prog-epargne-moyen   .progress-bar { background: linear-gradient(90deg, #0dcaf0, #4dd8e8) !important; }
+  .prog-epargne-debut   .progress-bar { background: linear-gradient(90deg, #ffc107, #ffda6a) !important; }
+  .prog-limite-depasse  .progress-bar { background: linear-gradient(90deg, var(--accent2), #ff3355) !important; }
+  .prog-limite-alerte   .progress-bar { background: linear-gradient(90deg, #ffc107, #ffda6a) !important; }
+  .prog-limite-ok       .progress-bar { background: linear-gradient(90deg, var(--accent3), #20c997) !important; }
+
+  .progress-label {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    font-size: .62rem; font-weight: 700; color: #fff;
+    text-shadow: 0 1px 3px rgba(0,0,0,.4); pointer-events: none;
+  }
+  .jours-badge { font-size: .73rem; padding: .25rem .65rem; border-radius: 10px; font-weight: 600; }
+  .type-icon { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+  .type-icon.epargne { background: rgba(108,99,255,.12); color: var(--accent); }
+  .type-icon.limite  { background: rgba(255,101,132,.12); color: var(--accent2); }
+  .empty-state { background: var(--card2); border: 1px dashed var(--border); border-radius: 20px; padding: 60px 20px; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h3 class="fw-bold mb-1" style="font-family:'Syne',sans-serif;">Objectifs financiers</h3>
+    <small style="color:var(--text2);">Suivez vos progrès en temps réel</small>
+  </div>
+  <a href="{% url 'objectif_ajouter' %}" class="btn btn-primary" style="background:var(--accent);border:none;border-radius:12px;font-weight:600;">
+    <i class="bi bi-plus-lg me-1"></i> Nouvel objectif
+  </a>
+</div>
+
+{% if objectifs_data %}
+<div class="row g-3">
+  {% for item in objectifs_data %}
+  <div class="col-12 col-md-6">
+    <div class="obj-card {% if item.atteint %}obj-atteint{% elif item.depasse %}obj-depasse{% endif %}">
+
+      <div class="obj-card-accent"
+           style="background:{% if item.atteint %}var(--accent3){% elif item.depasse %}var(--accent2){% elif item.objectif.type == 'epargne' %}var(--accent){% else %}#ffc107{% endif %};"></div>
+
+      <div class="card-body p-4">
+
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <div class="d-flex align-items-center gap-3">
+            <div class="type-icon {{ item.objectif.type }}">
+              {% if item.objectif.type == 'epargne' %}<i class="bi bi-piggy-bank-fill"></i>
+              {% else %}<i class="bi bi-shield-fill-exclamation"></i>{% endif %}
+            </div>
+            <div>
+              <h6 class="fw-semibold mb-0" style="color:var(--text);">{{ item.objectif.nom }}</h6>
+              <small>
+                <span class="badge rounded-pill"
+                      style="background:{% if item.objectif.type == 'epargne' %}rgba(108,99,255,.12){% else %}rgba(255,101,132,.12){% endif %};
+                             color:{% if item.objectif.type == 'epargne' %}var(--accent){% else %}var(--accent2){% endif %};
+                             font-size:.72rem;font-weight:600;">
+                  {{ item.objectif.get_type_display }}
+                </span>
+              </small>
+            </div>
+          </div>
+          <div class="d-flex gap-2">
+            <a href="{% url 'objectif_modifier' item.objectif.pk %}" class="btn btn-sm"
+               style="background:var(--card2);border:1px solid var(--border);color:var(--text2);border-radius:9px;">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <a href="{% url 'objectif_supprimer' item.objectif.pk %}" class="btn btn-sm"
+               style="background:rgba(255,101,132,.1);border:1px solid rgba(255,101,132,.2);color:var(--accent2);border-radius:9px;">
+              <i class="bi bi-trash"></i>
+            </a>
+          </div>
+        </div>
+
+        {% if item.objectif.description %}
+        <p class="small mb-3" style="color:var(--text2);">{{ item.objectif.description }}</p>
+        {% endif %}
+
+        {% if item.atteint %}
+        <div class="d-flex align-items-center gap-2 mb-3 p-2 rounded-3"
+             style="background:rgba(67,233,123,.08);border:1px solid rgba(67,233,123,.2);">
+          <i class="bi bi-trophy-fill" style="color:var(--accent3);"></i>
+          <small class="fw-semibold" style="color:var(--accent3);">🎉 Objectif atteint ! Félicitations !</small>
+        </div>
+        {% elif item.depasse %}
+        <div class="d-flex align-items-center gap-2 mb-3 p-2 rounded-3"
+             style="background:rgba(255,101,132,.08);border:1px solid rgba(255,101,132,.2);">
+          <i class="bi bi-exclamation-triangle-fill" style="color:var(--accent2);"></i>
+          <small class="fw-semibold" style="color:var(--accent2);">Limite dépassée !</small>
+        </div>
+        {% elif item.pourcentage >= 75 and item.objectif.type == 'limite' %}
+        <div class="d-flex align-items-center gap-2 mb-3 p-2 rounded-3"
+             style="background:rgba(255,193,7,.08);border:1px solid rgba(255,193,7,.2);">
+          <i class="bi bi-exclamation-circle-fill" style="color:#ffc107;"></i>
+          <small class="fw-semibold" style="color:#ffc107;">Attention — vous approchez de votre limite !</small>
+        </div>
+        {% endif %}
+
+        <div class="d-flex justify-content-between small mb-2">
+          <span style="color:var(--text2);">
+            {% if item.objectif.type == 'epargne' %}Épargné{% else %}Dépensé{% endif %} :
+            <strong style="color:var(--text);">{{ item.montant_actuel }} DH</strong>
+          </span>
+          <span style="color:var(--text2);">Cible : <strong style="color:var(--text);">{{ item.objectif.montant_cible }} DH</strong></span>
+        </div>
+
+        <div class="position-relative progress
+             {% if item.objectif.type == 'epargne' %}
+               {% if item.pourcentage >= 100 %}prog-epargne-atteint{% elif item.pourcentage >= 50 %}prog-epargne-moyen{% else %}prog-epargne-debut{% endif %}
+             {% else %}
+               {% if item.pourcentage >= 100 %}prog-limite-depasse{% elif item.pourcentage >= 75 %}prog-limite-alerte{% else %}prog-limite-ok{% endif %}
+             {% endif %}"
+             style="height:14px;border-radius:8px;">
+          <div class="progress-bar" role="progressbar"
+               style="width:{{ item.pourcentage }}%;border-radius:8px;"
+               aria-valuenow="{{ item.pourcentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+          {% if item.pourcentage > 15 %}<span class="progress-label">{{ item.pourcentage }}%</span>{% endif %}
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-3">
+          <span class="small" style="color:var(--text2);">
+            <i class="bi bi-calendar3 me-1"></i>{{ item.objectif.date_limite|date:"d/m/Y" }}
+          </span>
+          <div class="d-flex align-items-center gap-2">
+            <small style="color:var(--text2);">{{ item.pourcentage }}%</small>
+            {% if item.jours_restants > 0 %}
+              <span class="jours-badge" style="background:var(--card2);color:var(--text2);border:1px solid var(--border);">{{ item.jours_restants }}j restants</span>
+            {% elif item.jours_restants == 0 %}
+              <span class="jours-badge" style="background:rgba(255,193,7,.12);color:#ffc107;border:1px solid rgba(255,193,7,.2);">Aujourd'hui !</span>
+            {% else %}
+              <span class="jours-badge" style="background:rgba(255,101,132,.12);color:var(--accent2);border:1px solid rgba(255,101,132,.2);">Expiré</span>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% else %}
+<div class="empty-state text-center">
+  <i class="bi bi-trophy fs-1 d-block mb-3" style="color:var(--text2);"></i>
+  <h5 class="fw-semibold mb-2" style="color:var(--text);">Aucun objectif défini</h5>
+  <p class="mb-4" style="color:var(--text2);">Commencez à définir vos objectifs financiers.</p>
+  <a href="{% url 'objectif_ajouter' %}" class="btn btn-primary" style="background:var(--accent);border:none;border-radius:12px;font-weight:600;">
+    <i class="bi bi-plus-lg me-1"></i> Créer mon premier objectif
+  </a>
+</div>
+{% endif %}
+
+{% endblock %}
