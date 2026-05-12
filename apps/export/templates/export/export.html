@@ -1,8 +1,25 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="text-center mt-5">
-    <h1><i class="bi bi-file-excel"></i> Export Excel</h1>
-    <p class="text-muted">Cette page sera complétée par Personne 3.</p>
+<div class="container mt-5">
+    <h1><i class="bi bi-file-earmark-excel-fill"></i> Export Excel</h1>
+
+    <form method="post" class="card p-4 mt-4">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <label>Date début</label>
+            <input type="date" name="date_debut" class="form-control">
+        </div>
+
+        <div class="mb-3">
+            <label>Date fin</label>
+            <input type="date" name="date_fin" class="form-control">
+        </div>
+
+        <button type="submit" class="btn btn-success">
+            Télécharger Excel
+        </button>
+    </form>
 </div>
 {% endblock %}
