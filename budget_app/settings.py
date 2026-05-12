@@ -37,7 +37,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'budget',  
+    'apps.accounts',
+    'apps.transactions',
+    'apps.dashboard',
+    'apps.objectifs',
+    'apps.budgets',
+    'apps.notifications',
+    'apps.export',
+    'apps.chatbot',
 ]
 
 MIDDLEWARE = [
@@ -76,11 +83,11 @@ WSGI_APPLICATION = 'budget_app.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'budget_db',
+        'NAME': 'budget_app_db',
         'USER': 'root',
         'PASSWORD': '',
         'HOST': '127.0.0.1',
-        'PORT': '3306',
+        'PORT': '3307',
     }
 }
 
@@ -119,6 +126,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/login/'
 LOGIN_URL = '/login/'

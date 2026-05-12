@@ -1,0 +1,420 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Tableau de bord{% endblock %}
+
+{% block extra_css %}
+<style>
+  .stat-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 20px; padding: 24px; position: relative;
+    overflow: hidden;
+    transition: transform .25s cubic-bezier(.4,0,.2,1), box-shadow .25s cubic-bezier(.4,0,.2,1);
+  }
+  .stat-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px var(--shadow); }
+  .stat-card::before {
+    content: ''; position: absolute; top: -30px; right: -30px;
+    width: 110px; height: 110px; border-radius: 50%; opacity: .08;
+  }
+  .stat-card.solde::before    { background: var(--accent3); }
+  .stat-card.revenus::before  { background: var(--accent); }
+  .stat-card.depenses::before { background: var(--accent2); }
+
+  .stat-icon {
+    width: 48px; height: 48px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; flex-shrink: 0;
+  }
+  .stat-card.solde .stat-icon    { background: rgba(67,233,123,.12); color: var(--accent3); }
+  .stat-card.revenus .stat-icon  { background: rgba(108,99,255,.12); color: var(--accent); }
+  .stat-card.depenses .stat-icon { background: rgba(255,101,132,.12); color: var(--accent2); }
+
+  .score-ring {
+    width: 84px; height: 84px; border-radius: 50%;
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; font-weight: 800; font-size: 1.4rem;
+    border: 4px solid; flex-shrink: 0; font-family: 'Syne', sans-serif;
+  }
+  .score-ring.success { border-color: var(--accent3); color: var(--accent3); background: rgba(67,233,123,.08); }
+  .score-ring.info    { border-color: #0dcaf0; color: #0dcaf0; background: rgba(13,202,240,.08); }
+  .score-ring.warning { border-color: #ffc107; color: #ffc107; background: rgba(255,193,7,.08); }
+  .score-ring.danger  { border-color: var(--accent2); color: var(--accent2); background: rgba(255,101,132,.08); }
+
+  .glass-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+    transition: transform .25s cubic-bezier(.4,0,.2,1);
+  }
+  .glass-card:hover { transform: translateY(-3px); }
+
+  .conseil-card { border-radius: 16px !important; border-left: 4px solid; animation: slideIn .4s ease-out; }
+  .conseil-card.success { border-color: var(--accent3); background: rgba(67,233,123,.06) !important; }
+  .conseil-card.warning { border-color: #ffc107;        background: rgba(255,193,7,.06)  !important; }
+  .conseil-card.danger  { border-color: var(--accent2); background: rgba(255,101,132,.06)!important; }
+  .conseil-card.info    { border-color: var(--accent);  background: rgba(108,99,255,.06) !important; }
+  @keyframes slideIn { from { opacity:0; transform:translateX(-16px); } to { opacity:1; transform:translateX(0); } }
+
+  .date-pills-wrap { background: var(--card2); border: 1px solid var(--border); border-radius: 18px; padding: 14px 16px; }
+  .date-pills-container { display: flex; gap: .6rem; overflow-x: auto; padding: 4px 2px 8px; scrollbar-width: thin; }
+  .date-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: .5rem 1rem; border-radius: 999px; font-size: .82rem; font-weight: 600;
+    border: 1px solid var(--border); color: var(--text2);
+    background: var(--card); text-decoration: none; white-space: nowrap;
+    transition: all .25s cubic-bezier(.4,0,.2,1);
+  }
+  .date-pill:hover { background: var(--accent); border-color: var(--accent); color: #fff; transform: translateY(-2px); }
+  .date-pill.active { background: linear-gradient(135deg, var(--accent), var(--accent2)); border-color: var(--accent); color: #fff; }
+
+  .variation-badge { font-size: .7rem; padding: .2rem .5rem; border-radius: 8px; }
+  .alert-depasse-flash { animation: flashRed 1.5s ease-in-out 3; }
+  @keyframes flashRed { 0%,100% { background: rgba(255,101,132,.06); } 50% { background: rgba(255,101,132,.18); } }
+
+  .table-dark-custom { background: var(--card); color: var(--text); border-color: var(--border); }
+  .table-dark-custom thead th { color: var(--text2); font-size: .78rem; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .table-dark-custom tbody td { padding: 14px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .table-dark-custom tbody tr:hover { background: var(--table-hover); }
+  .table-dark-custom tbody tr:last-child td { border-bottom: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% for alerte in alertes %}
+<div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2 mb-2 alert-depasse-flash" role="alert">
+  <i class="bi bi-exclamation-triangle-fill"></i>
+  <span>Budget <strong>{{ alerte.categorie }}</strong> dépassé — dépensé <strong>{{ alerte.depense }} DH</strong> sur {{ alerte.limite }} DH (dépassement : <strong>+{{ alerte.depassement }} DH</strong>)</span>
+  <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+</div>
+{% endfor %}
+
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
+  <div>
+    <h3 class="fw-bold mb-1" style="font-family:'Syne',sans-serif">Tableau de bord</h3>
+    <p class="text-muted mb-0" style="font-size:.9rem">
+      <i class="bi bi-calendar3 me-1"></i>{{ mois_actuel }}
+      {% if notifications_non_lues %}
+        <a href="{% url 'notifications' %}" class="ms-3 text-decoration-none">
+          <span class="badge rounded-pill" style="background:var(--accent2);font-size:.75rem;">
+            <i class="bi bi-bell-fill me-1"></i>{{ notifications_non_lues }} nouvelle(s)
+          </span>
+        </a>
+      {% endif %}
+    </p>
+  </div>
+  <a href="{% url 'transaction_liste' %}" class="btn btn-primary" style="background:var(--accent);border:none;border-radius:12px;font-weight:600;">
+    <i class="bi bi-plus-lg me-2"></i>Nouvelle transaction
+  </a>
+</div>
+
+<!-- FILTRE MOIS -->
+<div class="date-pills-wrap mb-4">
+  <div class="d-flex align-items-center gap-2 mb-2" style="color:var(--accent);font-weight:600;font-size:.88rem;">
+    <i class="bi bi-calendar-month-fill"></i> Filtrer par mois
+  </div>
+  <div class="date-pills-container">
+    {% for m in mois_disponibles %}
+    <a href="?mois={{ m.valeur }}" class="date-pill {% if m.selectionne %}active{% endif %}">
+      <i class="bi bi-circle-fill" style="font-size:.4rem;"></i>{{ m.label }}
+    </a>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- CONSEIL INTELLIGENT -->
+{% if conseil %}
+<div class="card conseil-card {{ conseil_type }} border-0 mb-4">
+  <div class="card-body py-3 px-4 d-flex align-items-center gap-3">
+    {% if conseil_type == 'success' %}<i class="bi bi-stars" style="color:var(--accent3);font-size:1.4rem;"></i>
+    {% elif conseil_type == 'warning' %}<i class="bi bi-lightbulb-fill" style="color:#ffc107;font-size:1.4rem;"></i>
+    {% elif conseil_type == 'danger' %}<i class="bi bi-shield-exclamation" style="color:var(--accent2);font-size:1.4rem;"></i>
+    {% else %}<i class="bi bi-info-circle-fill" style="color:var(--accent);font-size:1.4rem;"></i>{% endif %}
+    <span style="color:var(--text);font-size:.9rem;">{{ conseil|safe }}</span>
+  </div>
+</div>
+{% endif %}
+
+<!-- STAT CARDS -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">
+    <div class="stat-card solde">
+      <div class="d-flex align-items-center gap-3">
+        <div class="stat-icon"><i class="bi bi-wallet2-fill"></i></div>
+        <div>
+          <p style="color:var(--text2);font-size:.8rem;margin-bottom:4px;">Solde</p>
+          <h4 class="fw-bold mb-0" style="font-family:'Syne',sans-serif;color:{% if solde >= 0 %}var(--accent3){% else %}var(--accent2){% endif %};">
+            {% if solde >= 0 %}+{% endif %}{{ solde|floatformat:2 }} DH
+          </h4>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-lg-3">
+    <div class="stat-card revenus">
+      <div class="d-flex align-items-center gap-3">
+        <div class="stat-icon"><i class="bi bi-arrow-down-circle-fill"></i></div>
+        <div>
+          <p style="color:var(--text2);font-size:.8rem;margin-bottom:4px;">Revenus</p>
+          <h4 class="fw-bold mb-0" style="font-family:'Syne',sans-serif;color:var(--accent);">+{{ total_revenus }} DH</h4>
+          <div class="d-flex align-items-center gap-1 mt-1">
+            {% if variation_revenus > 0 %}<span class="badge variation-badge" style="background:rgba(67,233,123,.15);color:var(--accent3);">▲ {{ variation_revenus }}%</span>
+            {% elif variation_revenus < 0 %}<span class="badge variation-badge" style="background:rgba(255,101,132,.15);color:var(--accent2);">▼ {{ variation_revenus|slice:"1:" }}%</span>
+            {% else %}<span class="badge variation-badge" style="background:var(--card2);color:var(--text2);">= 0%</span>{% endif %}
+            <small style="color:var(--text2);font-size:.7rem;">vs mois préc.</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-lg-3">
+    <div class="stat-card depenses">
+      <div class="d-flex align-items-center gap-3">
+        <div class="stat-icon"><i class="bi bi-arrow-up-circle-fill"></i></div>
+        <div>
+          <p style="color:var(--text2);font-size:.8rem;margin-bottom:4px;">Dépenses</p>
+          <h4 class="fw-bold mb-0" style="font-family:'Syne',sans-serif;color:var(--accent2);">-{{ total_depenses }} DH</h4>
+          <div class="d-flex align-items-center gap-1 mt-1">
+            {% if variation_depenses > 0 %}<span class="badge variation-badge" style="background:rgba(255,101,132,.15);color:var(--accent2);">▲ {{ variation_depenses }}%</span>
+            {% elif variation_depenses < 0 %}<span class="badge variation-badge" style="background:rgba(67,233,123,.15);color:var(--accent3);">▼ {{ variation_depenses|slice:"1:" }}%</span>
+            {% else %}<span class="badge variation-badge" style="background:var(--card2);color:var(--text2);">= 0%</span>{% endif %}
+            <small style="color:var(--text2);font-size:.7rem;">vs mois préc.</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-lg-3">
+    <div class="stat-card" style="background:var(--card);border:1px solid var(--border);">
+      <div class="d-flex align-items-center gap-3">
+        <div class="score-ring {{ score_couleur }}"><span>{{ score_sante }}</span></div>
+        <div>
+          <p style="color:var(--text2);font-size:.8rem;margin-bottom:4px;">Santé financière</p>
+          <h6 class="fw-bold mb-0 text-{{ score_couleur }}" style="font-family:'Syne',sans-serif;">{{ score_label }}</h6>
+          <small style="color:var(--text2);font-size:.75rem;">Score sur 100</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GRAPHIQUES -->
+<div class="row g-3 mb-4">
+  <div class="col-12 col-md-5">
+    <div class="glass-card h-100">
+      <div class="card-body p-4">
+        <h6 class="fw-semibold mb-3" style="color:var(--text);font-family:'Syne',sans-serif;">
+          <i class="bi bi-pie-chart-fill me-2" style="color:var(--accent);"></i>Dépenses par catégorie
+        </h6>
+        {% if valeurs_camembert %}
+          <canvas id="chartCamembert" height="230"></canvas>
+        {% else %}
+          <div class="text-center py-5" style="color:var(--text2);">
+            <i class="bi bi-pie-chart fs-1 d-block mb-2"></i>Aucune dépense ce mois-ci
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-md-7">
+    <div class="glass-card h-100">
+      <div class="card-body p-4">
+        <h6 class="fw-semibold mb-3" style="color:var(--text);font-family:'Syne',sans-serif;">
+          <i class="bi bi-bar-chart-fill me-2" style="color:var(--accent2);"></i>Revenus vs Dépenses — 6 derniers mois
+        </h6>
+        <canvas id="chartBarres" height="230"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="glass-card mb-4">
+  <div class="card-body p-4">
+    <h6 class="fw-semibold mb-3" style="color:var(--text);font-family:'Syne',sans-serif;">
+      <i class="bi bi-graph-up-arrow me-2" style="color:var(--accent3);"></i>Évolution des dépenses — 12 derniers mois
+    </h6>
+    <canvas id="chartLigne" height="90"></canvas>
+  </div>
+</div>
+
+<!-- COMPARAISON MOIS -->
+<div class="glass-card mb-4">
+  <div class="card-body p-4">
+    <h6 class="fw-semibold mb-4" style="color:var(--text);font-family:'Syne',sans-serif;">
+      <i class="bi bi-arrow-left-right me-2" style="color:var(--accent);"></i>Comparaison mois actuel vs précédent
+    </h6>
+    <div class="row g-4">
+      <div class="col-12 col-md-6">
+        <p class="small mb-1" style="color:var(--text2);">Dépenses</p>
+        <div class="d-flex justify-content-between small mb-2">
+          <span class="fw-semibold" style="color:var(--text);">Ce mois</span>
+          <span class="fw-semibold" style="color:var(--accent2);">{{ total_depenses }} DH</span>
+        </div>
+        <div class="progress mb-2">
+          <div class="progress-bar" style="background:var(--accent2);width:{% widthratio total_depenses total_depenses|add:depenses_mois_prec 100 %}%;"></div>
+        </div>
+        <div class="d-flex justify-content-between small">
+          <span style="color:var(--text2);">Mois précédent</span>
+          <span style="color:var(--text2);">{{ depenses_mois_prec }} DH</span>
+        </div>
+      </div>
+      <div class="col-12 col-md-6">
+        <p class="small mb-1" style="color:var(--text2);">Revenus</p>
+        <div class="d-flex justify-content-between small mb-2">
+          <span class="fw-semibold" style="color:var(--text);">Ce mois</span>
+          <span class="fw-semibold" style="color:var(--accent3);">{{ total_revenus }} DH</span>
+        </div>
+        <div class="progress mb-2">
+          <div class="progress-bar" style="background:var(--accent3);width:{% widthratio total_revenus total_revenus|add:revenus_mois_prec 100 %}%;"></div>
+        </div>
+        <div class="d-flex justify-content-between small">
+          <span style="color:var(--text2);">Mois précédent</span>
+          <span style="color:var(--text2);">{{ revenus_mois_prec }} DH</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DERNIÈRES TRANSACTIONS -->
+<div class="glass-card mb-4">
+  <div class="card-body p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h6 class="fw-semibold mb-0" style="color:var(--text);font-family:'Syne',sans-serif;">
+        <i class="bi bi-clock-history me-2" style="color:var(--accent);"></i>Dernières transactions
+      </h6>
+      <a href="{% url 'transaction_liste' %}" class="btn btn-sm" style="background:var(--card2);border:1px solid var(--border);color:var(--text2);border-radius:10px;font-size:.82rem;">
+        Voir tout <i class="bi bi-arrow-right ms-1"></i>
+      </a>
+    </div>
+    {% if dernieres_transactions %}
+    <div class="table-responsive">
+      <table class="table table-dark-custom mb-0">
+        <thead>
+          <tr>
+            <th>Date</th><th>Description</th><th>Catégorie</th><th class="text-end">Montant</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in dernieres_transactions %}
+          <tr>
+            <td><small style="color:var(--text2);">{{ t.date|date:"d/m/Y" }}</small></td>
+            <td style="color:var(--text);">{{ t.description }}</td>
+            <td>
+              {% if t.categorie %}
+                <span class="badge rounded-pill"
+                      style="background:{{ t.categorie.couleur }}20;color:{{ t.categorie.couleur }};border:1px solid {{ t.categorie.couleur }}40;font-size:.75rem;padding:.35rem .8rem;">
+                  {{ t.categorie.nom }}
+                </span>
+              {% else %}<span style="color:var(--text2);">—</span>{% endif %}
+            </td>
+            <td class="text-end fw-semibold" style="color:{% if t.type == 'revenu' %}var(--accent3){% else %}var(--accent2){% endif %};">
+              {% if t.type == 'revenu' %}+{% else %}-{% endif %}{{ t.montant }} DH
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <p class="text-center py-3" style="color:var(--text2);">Aucune transaction pour le moment.</p>
+    {% endif %}
+  </div>
+</div>
+
+{{ labels_camembert|json_script:"data-labels-camembert" }}
+{{ valeurs_camembert|json_script:"data-valeurs-camembert" }}
+{{ couleurs_camembert|json_script:"data-couleurs-camembert" }}
+{{ labels_barres|json_script:"data-labels-barres" }}
+{{ revenus_barres|json_script:"data-revenus-barres" }}
+{{ depenses_barres|json_script:"data-depenses-barres" }}
+{{ labels_ligne|json_script:"data-labels-ligne" }}
+{{ depenses_ligne|json_script:"data-depenses-ligne" }}
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const gridCol  = () => document.documentElement.getAttribute('data-theme') === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+  const labelCol = () => document.documentElement.getAttribute('data-theme') === 'dark' ? '#8b95a8' : '#64748b';
+
+  const labelsCamembert   = JSON.parse(document.getElementById('data-labels-camembert').textContent);
+  const valeursCamembert  = JSON.parse(document.getElementById('data-valeurs-camembert').textContent);
+  const couleursCamembert = JSON.parse(document.getElementById('data-couleurs-camembert').textContent);
+  const labelsBarres      = JSON.parse(document.getElementById('data-labels-barres').textContent);
+  const revenusBarres     = JSON.parse(document.getElementById('data-revenus-barres').textContent);
+  const depensesBarres    = JSON.parse(document.getElementById('data-depenses-barres').textContent);
+  const labelsLigne       = JSON.parse(document.getElementById('data-labels-ligne').textContent);
+  const depensesLigne     = JSON.parse(document.getElementById('data-depenses-ligne').textContent);
+
+  Chart.defaults.font.family = "'DM Sans', sans-serif";
+  Chart.defaults.font.size = 12;
+
+  const ctxCamembert = document.getElementById('chartCamembert');
+  if (ctxCamembert) {
+    new Chart(ctxCamembert, {
+      type: 'doughnut',
+      data: {
+        labels: labelsCamembert,
+        datasets: [{ data: valeursCamembert, backgroundColor: couleursCamembert.length ? couleursCamembert : ['#6c63ff','#ff6584','#43e97b'], borderWidth: 3, borderColor: 'transparent', hoverOffset: 10 }]
+      },
+      options: {
+        responsive: true, cutout: '68%',
+        plugins: {
+          legend: { position: 'right', labels: { padding: 16, boxWidth: 12, color: labelCol() } },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.label} : ${ctx.parsed.toLocaleString()} DH` } }
+        }
+      }
+    });
+  }
+
+  const ctxBarres = document.getElementById('chartBarres');
+  if (ctxBarres) {
+    new Chart(ctxBarres, {
+      type: 'bar',
+      data: {
+        labels: labelsBarres,
+        datasets: [
+          { label: 'Revenus',  data: revenusBarres,  backgroundColor: 'rgba(108,99,255,.65)', borderRadius: 8, borderSkipped: false },
+          { label: 'Dépenses', data: depensesBarres, backgroundColor: 'rgba(255,101,132,.65)', borderRadius: 8, borderSkipped: false }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'top', labels: { color: labelCol(), boxWidth: 12, padding: 14 } },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label} : ${ctx.parsed.y.toLocaleString()} DH` } }
+        },
+        scales: {
+          y: { beginAtZero: true, grid: { color: gridCol() }, ticks: { color: labelCol() } },
+          x: { grid: { display: false }, ticks: { color: labelCol() } }
+        }
+      }
+    });
+  }
+
+  const ctxLigne = document.getElementById('chartLigne');
+  if (ctxLigne) {
+    new Chart(ctxLigne, {
+      type: 'line',
+      data: {
+        labels: labelsLigne,
+        datasets: [{ label: 'Dépenses', data: depensesLigne, borderColor: '#ff6584', backgroundColor: 'rgba(255,101,132,.08)', borderWidth: 2.5, fill: true, tension: 0.4, pointBackgroundColor: '#ff6584', pointRadius: 4, pointHoverRadius: 7 }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => ` Dépenses : ${ctx.parsed.y.toLocaleString()} DH` } }
+        },
+        scales: {
+          y: { beginAtZero: true, grid: { color: gridCol() }, ticks: { color: labelCol() } },
+          x: { grid: { display: false }, ticks: { color: labelCol() } }
+        }
+      }
+    });
+  }
+</script>
+{% endblock %}
