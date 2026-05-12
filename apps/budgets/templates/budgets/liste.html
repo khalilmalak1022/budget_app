@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Budgets par catégorie{% endblock %}
+
+{% block extra_css %}
+<style>
+  .budget-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 20px; overflow: hidden;
+    transition: transform .25s cubic-bezier(.4,0,.2,1), box-shadow .25s cubic-bezier(.4,0,.2,1);
+  }
+  .budget-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px var(--shadow); }
+  .budget-card-accent { height: 4px; width: 100%; }
+
+  .budget-depasse { border-color: rgba(255,101,132,.25) !important; animation: pulseRed 2s ease-in-out infinite; }
+  @keyframes pulseRed { 0%,100% { box-shadow: 0 4px 16px rgba(255,101,132,.08); } 50% { box-shadow: 0 4px 28px rgba(255,101,132,.28); } }
+
+  .progress-critique      .progress-bar { background: linear-gradient(90deg, var(--accent2), #ff3355) !important; }
+  .progress-avertissement .progress-bar { background: linear-gradient(90deg, #ffc107, #ffda6a) !important; }
+  .progress-ok            .progress-bar { background: linear-gradient(90deg, var(--accent3), #20c997) !important; }
+
+  .progress-label {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    font-size: .62rem; font-weight: 700; color: #fff;
+    text-shadow: 0 1px 3px rgba(0,0,0,.4); pointer-events: none;
+  }
+  .restant-badge { font-size: .73rem; padding: .25rem .65rem; border-radius: 10px; font-weight: 600; }
+  .cat-dot { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+  .empty-state { background: var(--card2); border: 1px dashed var(--border); border-radius: 20px; padding: 60px 20px; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h3 class="fw-bold mb-1" style="font-family:'Syne',sans-serif;">Budgets par catégorie</h3>
+    <small style="color:var(--text2);">Suivi en temps réel de vos limites</small>
+  </div>
+  <a href="{% url 'budget_ajouter' %}" class="btn btn-primary" style="background:var(--accent);border:none;border-radius:12px;font-weight:600;">
+    <i class="bi bi-plus-lg me-1"></i> Nouveau budget
+  </a>
+</div>
+
+{% if budgets_data %}
+<div class="row g-3">
+  {% for item in budgets_data %}
+  <div class="col-12 col-md-6">
+    <div class="budget-card {% if item.depasse %}budget-depasse{% endif %}">
+
+      <div class="budget-card-accent"
+           style="background:{% if item.depasse %}var(--accent2){% elif item.pourcentage >= 75 %}#ffc107{% else %}var(--accent3){% endif %};"></div>
+
+      <div class="card-body p-4">
+
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <div class="d-flex align-items-center gap-3">
+            <div class="cat-dot" style="background:{{ item.budget.categorie.couleur }}20;color:{{ item.budget.categorie.couleur }};">
+              <i class="bi bi-tag-fill"></i>
+            </div>
+            <div>
+              <h6 class="fw-semibold mb-0" style="color:var(--text);">{{ item.budget.categorie.nom }}</h6>
+              <small style="color:var(--text2);"><i class="bi bi-calendar3 me-1"></i>{{ item.budget.periode|date:"m/Y" }}</small>
+            </div>
+          </div>
+          <div class="d-flex gap-2">
+            <a href="{% url 'budget_modifier' item.budget.pk %}" class="btn btn-sm"
+               style="background:var(--card2);border:1px solid var(--border);color:var(--text2);border-radius:9px;">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <a href="{% url 'budget_supprimer' item.budget.pk %}" class="btn btn-sm"
+               style="background:rgba(255,101,132,.1);border:1px solid rgba(255,101,132,.2);color:var(--accent2);border-radius:9px;">
+              <i class="bi bi-trash"></i>
+            </a>
+          </div>
+        </div>
+
+        {% if item.depasse %}
+        <div class="d-flex align-items-center gap-2 mb-3 p-2 rounded-3"
+             style="background:rgba(255,101,132,.08);border:1px solid rgba(255,101,132,.2);">
+          <i class="bi bi-exclamation-triangle-fill" style="color:var(--accent2);"></i>
+          <small class="fw-semibold" style="color:var(--accent2);">
+            Budget dépassé de <strong>{{ item.restant|floatformat:2|slice:"1:" }} DH</strong> !
+          </small>
+        </div>
+        {% elif item.pourcentage >= 75 %}
+        <div class="d-flex align-items-center gap-2 mb-3 p-2 rounded-3"
+             style="background:rgba(255,193,7,.08);border:1px solid rgba(255,193,7,.2);">
+          <i class="bi bi-exclamation-circle-fill" style="color:#ffc107;"></i>
+          <small class="fw-semibold" style="color:#ffc107;">Attention — vous approchez de votre limite !</small>
+        </div>
+        {% endif %}
+
+        <div class="d-flex justify-content-between small mb-2">
+          <span style="color:var(--text2);">
+            Dépensé : <strong style="color:{% if item.depasse %}var(--accent2){% else %}var(--text){% endif %};">{{ item.depense_reelle }} DH</strong>
+          </span>
+          <span style="color:var(--text2);">Limite : <strong style="color:var(--text);">{{ item.budget.montant_limite }} DH</strong></span>
+        </div>
+
+        <div class="position-relative progress
+             {% if item.pourcentage >= 100 %}progress-critique
+             {% elif item.pourcentage >= 75 %}progress-avertissement
+             {% else %}progress-ok{% endif %}"
+             style="height:14px;border-radius:8px;">
+          <div class="progress-bar" role="progressbar"
+               style="width:{{ item.pourcentage }}%;border-radius:8px;"
+               aria-valuenow="{{ item.pourcentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+          {% if item.pourcentage > 15 %}<span class="progress-label">{{ item.pourcentage }}%</span>{% endif %}
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-3">
+          <small style="color:var(--text2);">{{ item.pourcentage }}% utilisé</small>
+          {% if item.restant >= 0 %}
+            <span class="restant-badge" style="background:rgba(67,233,123,.12);color:var(--accent3);border:1px solid rgba(67,233,123,.2);">
+              {{ item.restant|floatformat:2 }} DH restants
+            </span>
+          {% else %}
+            <span class="restant-badge" style="background:rgba(255,101,132,.12);color:var(--accent2);border:1px solid rgba(255,101,132,.2);">
+              <i class="bi bi-exclamation-triangle-fill me-1"></i>Dépassé
+            </span>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% else %}
+<div class="empty-state text-center">
+  <i class="bi bi-wallet2 fs-1 d-block mb-3" style="color:var(--text2);"></i>
+  <h5 class="fw-semibold mb-2" style="color:var(--text);">Aucun budget défini</h5>
+  <p class="mb-4" style="color:var(--text2);">Créez vos premiers budgets par catégorie.</p>
+  <a href="{% url 'budget_ajouter' %}" class="btn btn-primary" style="background:var(--accent);border:none;border-radius:12px;font-weight:600;">
+    <i class="bi bi-plus-lg me-1"></i> Créer mon premier budget
+  </a>
+</div>
+{% endif %}
+
+{% endblock %}
