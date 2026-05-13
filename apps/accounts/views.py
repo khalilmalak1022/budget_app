@@ -1,6 +1,7 @@
-from django.shortcuts import render, redirect
+﻿from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.contrib import messages
 from .forms import RegisterForm
 from apps.accounts.models import Profil
@@ -12,7 +13,7 @@ def register(request):
             user = form.save()
             devise = request.POST.get('devise', 'DH')
             Profil.objects.create(user=user, devise=devise)
-            messages.success(request, 'Compte créé avec succès !')
+            messages.success(request, 'Compte cree avec succes !')
             return redirect('login')
     else:
         form = RegisterForm()
@@ -20,9 +21,15 @@ def register(request):
 
 def login_view(request):
     if request.method == 'POST':
-        username = request.POST.get('username')
+        identifiant = request.POST.get('username')
         password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
+        user = authenticate(request, username=identifiant, password=password)
+        if user is None:
+            try:
+                user_obj = User.objects.get(email=identifiant)
+                user = authenticate(request, username=user_obj.username, password=password)
+            except User.DoesNotExist:
+                user = None
         if user is not None:
             login(request, user)
             return redirect('dashboard')
@@ -40,6 +47,6 @@ def profil(request):
         devise = request.POST.get('devise')
         request.user.profil.devise = devise
         request.user.profil.save()
-        messages.success(request, 'Profil mis à jour !')
+        messages.success(request, 'Profil mis a jour !')
         return redirect('profil')
     return render(request, 'accounts/profil.html')

@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titre }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .form-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 32px; }
+  .form-control, .form-select {
+    background: var(--card2) !important; border: 1px solid var(--border) !important;
+    color: var(--text) !important; border-radius: 12px !important; padding: 12px 16px;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .form-control:focus, .form-select:focus {
+    border-color: var(--accent) !important; box-shadow: 0 0 0 3px rgba(108,99,255,.15) !important;
+  }
+  .form-label { color: var(--text2); font-size: .85rem; font-weight: 600; margin-bottom: 6px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-md-6">
+
+    <div class="d-flex align-items-center gap-3 mb-4">
+      <a href="{% url 'budget_liste' %}" class="btn btn-sm"
+         style="background:var(--card2);border:1px solid var(--border);color:var(--text2);border-radius:10px;">
+        <i class="bi bi-arrow-left"></i>
+      </a>
+      <div>
+        <h4 class="fw-bold mb-0" style="font-family:'Syne',sans-serif;color:var(--text);">{{ titre }}</h4>
+        <small style="color:var(--text2);">Budgets par catégorie</small>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="mb-4">
+          <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}
+            <div class="mt-1" style="color:var(--accent2);font-size:.82rem;">
+              {% for error in field.errors %}{{ error }}{% endfor %}
+            </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+        <div class="d-flex gap-3 mt-2">
+          <button type="submit" class="btn w-100 fw-semibold"
+                  style="background:var(--accent);border:none;color:#fff;border-radius:12px;padding:12px;">
+            <i class="bi bi-check-lg me-1"></i> Enregistrer
+          </button>
+          <a href="{% url 'budget_liste' %}" class="btn w-100"
+             style="background:var(--card2);border:1px solid var(--border);color:var(--text2);border-radius:12px;padding:12px;">
+            Annuler
+          </a>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
