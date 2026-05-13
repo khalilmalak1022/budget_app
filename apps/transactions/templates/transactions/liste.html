@@ -1,40 +1,57 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><i class="bi bi-arrow-left-right"></i> Mes Transactions</h2>
+<div class="page-title">Mes Transactions</div>
+<div class="page-subtitle">Gerez vos revenus et depenses</div>
+
+<div class="d-flex justify-content-end mb-4">
     <a href="{% url 'transaction_ajouter' %}" class="btn btn-success">
         <i class="bi bi-plus-circle"></i> Ajouter
     </a>
 </div>
 
-<div class="card shadow">
+<div class="card">
     <div class="card-body">
         <table class="table table-hover">
-            <thead class="table-dark">
+            <thead>
                 <tr>
-                    <th>Date</th>
-                    <th>Description</th>
-                    <th>Catégorie</th>
-                    <th>Type</th>
-                    <th>Montant</th>
-                    <th>Actions</th>
+                    <th style="color:var(--text2);font-size:0.75rem;text-transform:uppercase;">Date</th>
+                    <th style="color:var(--text2);font-size:0.75rem;text-transform:uppercase;">Description</th>
+                    <th style="color:var(--text2);font-size:0.75rem;text-transform:uppercase;">Categorie</th>
+                    <th style="color:var(--text2);font-size:0.75rem;text-transform:uppercase;">Type</th>
+                    <th style="color:var(--text2);font-size:0.75rem;text-transform:uppercase;">Montant</th>
+                    <th style="color:var(--text2);font-size:0.75rem;text-transform:uppercase;">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for t in transactions %}
                 <tr>
-                    <td>{{ t.date }}</td>
-                    <td>{{ t.description }}</td>
-                    <td>{{ t.categorie }}</td>
+                    <td style="color:var(--text);">{{ t.date }}</td>
+                    <td style="color:var(--text);">{{ t.description }}</td>
                     <td>
-                        {% if t.type == 'depense' %}
-                            <span class="badge bg-danger">Dépense</span>
+                        {% if t.categorie %}
+                        <div class="d-flex align-items-center gap-2">
+                            <div style="width:28px;height:28px;border-radius:50%;
+                                background:{{ t.categorie.couleur }};
+                                display:flex;align-items:center;justify-content:center;">
+                                {% if t.categorie.icone %}
+                                <i class="{{ t.categorie.icone }}" style="color:#fff;font-size:13px;"></i>
+                                {% endif %}
+                            </div>
+                            <span style="color:var(--text);">{{ t.categorie.nom }}</span>
+                        </div>
                         {% else %}
-                            <span class="badge bg-success">Revenu</span>
+                        <span style="color:var(--text2);">-</span>
                         {% endif %}
                     </td>
-                    <td class="{% if t.type == 'depense' %}text-danger{% else %}text-success{% endif %}">
+                    <td>
+                        {% if t.type == 'depense' %}
+                            <span class="badge-depense">Depense</span>
+                        {% else %}
+                            <span class="badge-revenu">Revenu</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-weight:600;{% if t.type == 'depense' %}color:#ff6584;{% else %}color:#43e97b;{% endif %}">
                         {% if t.type == 'depense' %}-{% else %}+{% endif %}
                         {{ t.montant }} {{ request.user.profil.devise }}
                     </td>
@@ -49,7 +66,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6" class="text-center text-muted">
+                    <td colspan="6" class="text-center" style="color:var(--text2);padding:30px;">
                         Aucune transaction pour le moment.
                     </td>
                 </tr>
@@ -58,4 +75,10 @@
         </table>
     </div>
 </div>
+
+<style>
+.table tbody tr:hover td { color:#e8eaf0 !important; }
+.table tbody tr:hover td span { color:#e8eaf0 !important; }
+</style>
+
 {% endblock %}
