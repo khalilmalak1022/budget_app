@@ -368,7 +368,76 @@
             animation: shimmer 2s infinite;
         }
         @keyframes shimmer { to { left: 100%; } }
+        /* ================= CHATBOT ================= */
 
+        .chatbot-page {
+            color: var(--text-color);
+        }
+
+        .chatbot-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+        }
+
+        .page-title,
+        .response-title,
+        .chatbot-page label {
+            color: var(--text-color);
+        }
+
+        .chatbot-textarea {
+            background: var(--input-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .chatbot-textarea::placeholder {
+            color: var(--muted-color);
+        }
+
+        .chatbot-textarea:focus {
+            background: var(--input-bg);
+            color: var(--text-color);
+            border-color: #7c5cff;
+            box-shadow: 0 0 0 0.2rem rgba(124, 92, 255, 0.25);
+        }
+
+        .chatbot-btn {
+            background: linear-gradient(90deg, #6c63ff, #8b6cff);
+            color: #fff;
+            font-weight: 600;
+            border: none;
+        }
+
+        .chatbot-response {
+            color: var(--text-color);
+            font-size: 16px;
+            line-height: 1.8;
+        }
+
+        .chatbot-response p {
+            color: var(--text-color);
+            margin-bottom: 10px;
+        }
+
+        /* MODE SOMBRE */
+        [data-theme="dark"] {
+            --text-color: #f4f6fb;
+            --muted-color: #9ca3af;
+            --card-bg: #111827;
+            --input-bg: #1f2937;
+            --border-color: #2f3a4f;
+        }
+
+        /* MODE CLAIR */
+        [data-theme="light"] {
+            --text-color: #111827;
+            --muted-color: #6b7280;
+            --card-bg: #ffffff;
+            --input-bg: #ffffff;
+            --border-color: #e5e7eb;
+        }
         /* ── AUTH ── */
         .auth-wrapper {
             min-height: 100vh; display: flex;
