@@ -1,50 +1,109 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 
 {% block content %}
+<div class="page-title">Categorie</div>
+<div class="page-subtitle">Ajouter ou modifier une categorie</div>
+
 <div class="row justify-content-center">
-    <div class="col-md-5">
-        <div class="card shadow">
-            <div class="card-header bg-success text-white">
-                <h4><i class="bi bi-tags"></i> Catégorie</h4>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-tags"></i> Categorie</h5>
             </div>
             <div class="card-body p-4">
                 <form method="post">
                     {% csrf_token %}
-
-                    <div class="mb-3">
-                        <label class="form-label">Nom</label>
-                        <input type="text" name="nom"
-                            class="form-control"
-                            value="{{ form.nom.value|default:'' }}" required>
+                    <div class="mb-4">
+                        <label class="form-label">Nom de la categorie</label>
+                        <input type="text" name="nom" class="form-control"
+                            value="{{ form.nom.value|default:'' }}"
+                            placeholder="Ex: Transport, Alimentation..." required>
                     </div>
-
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label class="form-label">Couleur</label>
-                        <input type="color" name="couleur"
-                            class="form-control form-control-color"
-                            value="{{ form.couleur.value|default:'#3498db' }}">
+                        <div class="d-flex flex-wrap gap-2 mt-2">
+                            {% for value, label in form.couleur.field.choices %}
+                            <label style="cursor:pointer;">
+                                <input type="radio" name="couleur" value="{{ value }}"
+                                    {% if form.couleur.value == value %}checked{% endif %}
+                                    style="display:none;"
+                                    onchange="selectCouleur(this)">
+                                <div class="couleur-btn"
+                                    style="width:36px;height:36px;border-radius:50%;
+                                    background:{{ value }};cursor:pointer;
+                                    border:3px solid transparent;transition:all 0.2s;"
+                                    onclick="this.previousElementSibling.click()"
+                                    title="{{ label }}">
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        <div class="mt-2 d-flex align-items-center gap-2">
+                            <div id="couleur-preview" style="width:24px;height:24px;
+                                border-radius:50%;background:{{ form.couleur.value|default:'#3498db' }};"></div>
+                            <small style="color:var(--text2);">Couleur selectionnee</small>
+                        </div>
                     </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Icône (optionnel)</label>
-                        <input type="text" name="icone"
-                            class="form-control"
-                            value="{{ form.icone.value|default:'' }}"
-                            placeholder="ex: bi-cart">
+                    <div class="mb-4">
+                        <label class="form-label">Icone</label>
+                        <div class="d-flex flex-wrap gap-2 mt-2">
+                            {% for value, label in form.icone.field.choices %}
+                            <label style="cursor:pointer;">
+                                <input type="radio" name="icone" value="{{ value }}"
+                                    {% if form.icone.value == value %}checked{% endif %}
+                                    style="display:none;">
+                                <div class="icone-btn"
+                                    style="width:44px;height:44px;border-radius:10px;
+                                    background:var(--card2);border:2px solid var(--border);
+                                    display:flex;align-items:center;justify-content:center;
+                                    cursor:pointer;transition:all 0.2s;font-size:18px;"
+                                    onclick="selectIcone(this)"
+                                    title="{{ label }}">
+                                    <i class="{{ value }}" style="color:var(--text);"></i>
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
                     </div>
-
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-success">
+                        <button type="submit" class="btn btn-primary">
                             <i class="bi bi-save"></i> Enregistrer
                         </button>
-                        <a href="{% url 'categorie_liste' %}" class="btn btn-secondary">
+                        <a href="{% url 'categorie_liste' %}" class="btn btn-danger">
                             <i class="bi bi-x-circle"></i> Annuler
                         </a>
                     </div>
-
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+.couleur-btn:hover{transform:scale(1.2);}
+.couleur-btn.selected{border:3px solid #fff !important;box-shadow:0 0 0 2px var(--accent);}
+.icone-btn:hover{border-color:var(--accent) !important;}
+.icone-btn.selected{border-color:var(--accent) !important;background:rgba(108,99,255,0.15) !important;}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('input[name="couleur"]').forEach(input => {
+        if (input.checked) input.nextElementSibling.classList.add('selected');
+    });
+    document.querySelectorAll('input[name="icone"]').forEach(input => {
+        if (input.checked) input.nextElementSibling.classList.add('selected');
+    });
+});
+function selectCouleur(input) {
+    document.querySelectorAll('.couleur-btn').forEach(btn => btn.classList.remove('selected'));
+    input.nextElementSibling.classList.add('selected');
+    document.getElementById('couleur-preview').style.background = input.value;
+}
+function selectIcone(div) {
+    document.querySelectorAll('.icone-btn').forEach(btn => btn.classList.remove('selected'));
+    div.classList.add('selected');
+    div.previousElementSibling.checked = true;
+}
+</script>
 {% endblock %}

@@ -15,8 +15,8 @@ MOIS_FR = [
 ]
 
 
-@login_required
-def dashboard(request):
+@login_required   #La page dashboard est accessible seulement aux utilisateurs connectés.
+def dashboard(request): 
     today = date.today()
 
     # ─── Filtre mois ─────────────────────────────────────────────────────────────
